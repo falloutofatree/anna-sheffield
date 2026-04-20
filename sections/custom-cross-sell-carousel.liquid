@@ -1,0 +1,259 @@
+<div class="custom-marquee-section" style="background-color: {{ section.settings.section_bg_color }};">
+  
+  {%- comment -%} ABSOLUTE POSITIONED HEADER (COVERING CAROUSEL) {%- endcomment -%}
+  <div class="marquee-header-overlay">
+    {%- if section.settings.title != blank -%}
+      <div class="marquee-title">{{ section.settings.title }}</div>
+    {%- endif -%}
+    {%- if section.settings.description != blank -%}
+      <div class="marquee-description">{{ section.settings.description }}</div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} SCROLLING CAROUSEL {%- endcomment -%}
+  <div class="marquee-carousel-wrapper">
+    <div class="marquee-track">
+      {%- assign source_collection = section.settings.collection -%}
+      
+      {%- if source_collection != blank and source_collection.products_count > 0 -%}
+        
+        {%- comment -%} Capture the loop {%- endcomment -%}
+        {%- capture marquee_cards -%}
+          {%- for product in source_collection.products limit: 12 -%}
+            <a href="{{ product.url }}" class="marquee-card" style="background-color: {{ section.settings.card_bg_color }};">
+              <div class="marquee-image-container">
+                <img 
+                  src="{{ product.featured_image | image_url: width: 800 }}" 
+                  alt="{{ product.title | escape }}"
+                  loading="lazy"
+                >
+              </div>
+            </a>
+          {%- endfor -%}
+        {%- endcapture -%}
+
+        {%- comment -%} Output the loop twice for the infinite effect {%- endcomment -%}
+        {{ marquee_cards }}
+        {{ marquee_cards }}
+        
+      {%- else -%}
+        {%- comment -%} Placeholder for Theme Editor {%- endcomment -%}
+        {%- for i in (1..8) -%}
+          <div class="marquee-card" style="background-color: {{ section.settings.card_bg_color }};">
+            <div class="marquee-image-container">
+              {{ 'product-' | append: i | placeholder_svg_tag: 'placeholder-svg' }}
+            </div>
+          </div>
+        {%- endfor -%}
+      {%- endif -%}
+    </div>
+  </div>
+
+  {%- comment -%} CTA FOOTER (UPDATED TO TEXT LINK) {%- endcomment -%}
+  {%- if section.settings.cta_label != blank and section.settings.cta_link != blank -%}
+    <div class="marquee-footer">
+      <a href="{{ section.settings.cta_link }}" class="marquee-link-cta">{{ section.settings.cta_label }}</a>
+    </div>
+  {%- endif -%}
+</div>
+
+<style>
+  /* MAIN SECTION */
+  .custom-marquee-section {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* TEXT OVERLAY */
+  .marquee-header-overlay {
+    position: absolute;
+    top: 40px; 
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    text-align: center;
+    z-index: 1;
+    pointer-events: none; 
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.8); 
+  }
+
+  .marquee-title * {
+    margin: 0;
+    font-size: 2.2rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  @media screen and (max-width: 767px) {
+    .marquee-header-overlay {
+      position: relative;
+      top: 0;
+      left: 0;
+      transform: none;
+      width: 100%;
+      padding: 40px 20px 20px;
+      pointer-events: auto;
+      text-shadow: none;
+    }
+
+    .marquee-title * {
+      font-size: 1.8rem;
+    }
+  }
+
+  .marquee-description * {
+    margin-top: 10px;
+    font-size: 1.1rem;
+  }
+
+  /* CAROUSEL TRACK */
+  .marquee-carousel-wrapper {
+    display: flex;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: autoScroll 80s linear infinite; 
+  }
+
+  .marquee-carousel-wrapper:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* INDIVIDUAL PRODUCT CARD */
+  .marquee-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 66.66vw; 
+    aspect-ratio: 2 / 3;
+     border-top: 1px solid #e5e5e5;
+    border-right: 1px solid #e5e5e5;
+    border-bottom: 1px solid #e5e5e5;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  .marquee-card:hover {
+    opacity: 0.85;
+  }
+
+  @media screen and (min-width: 768px) {
+    .marquee-card {
+      width: 22.22vw; 
+    }
+  }
+
+  /* IMAGE STYLING */
+  .marquee-image-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15%; 
+  }
+
+  .marquee-image-container img,
+  .marquee-image-container svg {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain; 
+  }
+
+  /* FOOTER & TEXT LINK CTA */
+  .marquee-footer {
+    display: flex;
+    justify-content: center; 
+    padding: 40px 20px;
+    background-color: {{ section.settings.section_bg_color }};
+  }
+
+  .marquee-link-cta {
+    font-size: 12;
+    color: inherit; /* Automatically matches the text color of your theme */
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 6px; /* Drops the underline down slightly so it looks cleaner */
+    text-decoration-thickness: 1px;
+    transition: text-decoration-thickness 0.2s ease, opacity 0.2s ease;
+    cursor: pointer;
+  }
+
+  .marquee-link-cta:hover {
+    text-decoration-thickness: 2px; /* Makes the underline bold on hover */
+    opacity: 0.8;
+  }
+
+  /* ANIMATION MATH */
+  @keyframes autoScroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); } 
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Cross Sell Carousel",
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Source Collection"
+    },
+    {
+      "type": "color",
+      "id": "section_bg_color",
+      "label": "Section Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "label": "Card Background Color",
+      "default": "#f9f9f9"
+    },
+    {
+      "type": "richtext",
+      "id": "title",
+      "label": "Heading",
+      "default": "<h2>Complete the Look</h2>"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>Discover items that pair perfectly.</p>"
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Button Label",
+      "default": "Shop All"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "Button Link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Cross Sell Carousel",
+      "category": "Custom Sections"
+    }
+  ]
+}
+{% endschema %}

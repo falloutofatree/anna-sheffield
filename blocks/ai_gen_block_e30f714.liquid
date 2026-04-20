@@ -1,0 +1,233 @@
+{% doc %}
+  @prompt
+    By switching to a typography preset selector, we can instruct Sidekick to apply your theme's native CSS classes (like the ones used for your "Baile" aesthetic headings or body text) directly to the ribbon. This is much cleaner than injecting custom CSS variables.
+    
+    Here is the refined prompt. I have updated the schema to request a select setting that outputs standard Shopify typography classes, ensuring it inherits your global font settings perfectly.
+    
+    The Refined Sidekick Prompt
+    Act as a Shopify Liquid Developer. Create a custom block called "Metafield Ribbon" for the Product Information section.
+    
+    1. Critical Conditional Logic:
+    Wrap the entire HTML output of this block in a Liquid {% if block.settings.ribbon_text != blank %} tag. If the connected dynamic source is empty, do not render any HTML for this block in the DOM.
+    
+    2. Block Schema (Settings):
+    
+    Content: Add a text setting with ID ribbon_text, label "Ribbon Content", and enable dynamic source support.
+    
+    Typography Preset: Add a select setting with ID typography_preset. The options should represent standard theme classes (e.g., value: "h2", label: "Heading"; value: "subtitle", label: "Subheading"; value: "body", label: "Body"; value: "caption", label: "Caption"). Default to the subheading or caption style.
+    
+    Layout (Padding): Add two range sliders:
+    
+    ID padding_vertical: Range 0px to 40px (default 4px).
+    
+    ID padding_horizontal: Range 0px to 60px (default 12px).
+    
+    Border & Design:
+    
+    ID border_width: Range slider 0px to 10px (default 1px).
+    
+    ID border_style: select dropdown with options: solid, dashed, dotted, none.
+    
+    ID border_color: Color picker.
+    
+    ID border_radius: Range slider 0px to 50px (to allow for pill shapes).
+    
+    Colors: Add color pickers for background_color and text_color.
+    
+    3. Liquid & HTML Implementation:
+    
+    Output the ribbon_text inside a <span> or <div>.
+    
+    Typography Application: Apply the {{ block.settings.typography_preset }} directly as a CSS class to the HTML element so it inherits the theme's global font family, size, and weight automatically.
+    
+    Ensure the main container div includes {{ block.shopify_attributes }} for Theme Editor drag-and-drop support.
+    
+    4. CSS Styling:
+    
+    Map the padding settings as padding: {{ block.settings.padding_vertical }}px {{ block.settings.padding_horizontal }}px;.
+    
+    Map the border properties: border: {{ block.settings.border_width }}px {{ block.settings.border_style }} {{ block.settings.border_color }};.
+    
+    Map the background and text colors. Ensure the element uses display: inline-block; or inline-flex; so it hugs the text content tightly like a badge.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% if block.settings.ribbon_text != blank %}
+  {% style %}
+    .ai-metafield-ribbon-{{ ai_gen_id }} {
+      display: inline-block;
+      padding: {{ block.settings.padding_vertical }}px {{ block.settings.padding_horizontal }}px;
+      background-color: {{ block.settings.background_color }};
+      color: {{ block.settings.text_color }};
+      border: {{ block.settings.border_width }}px {{ block.settings.border_style }} {{ block.settings.border_color }};
+      border-radius: {{ block.settings.border_radius }}px;
+    }
+  {% endstyle %}
+
+  <div {{ block.shopify_attributes }}>
+    <span class="ai-metafield-ribbon-{{ ai_gen_id }} {{ block.settings.typography_preset }}">
+      {{ block.settings.ribbon_text }}
+    </span>
+  </div>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Metafield ribbon",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "text",
+      "id": "ribbon_text",
+      "label": "Ribbon content",
+      "info": "Connect a dynamic source like a product metafield"
+    },
+    {
+      "type": "header",
+      "content": "Typography"
+    },
+    {
+      "type": "select",
+      "id": "typography_preset",
+      "label": "Typography preset",
+      "options": [
+        {
+          "value": "h1",
+          "label": "Heading 1"
+        },
+        {
+          "value": "h2",
+          "label": "Heading 2"
+        },
+        {
+          "value": "h3",
+          "label": "Heading 3"
+        },
+        {
+          "value": "h4",
+          "label": "Heading 4"
+        },
+        {
+          "value": "h5",
+          "label": "Heading 5"
+        },
+        {
+          "value": "h6",
+          "label": "Heading 6"
+        },
+        {
+          "value": "body",
+          "label": "Body"
+        },
+        {
+          "value": "caption",
+          "label": "Caption"
+        }
+      ],
+      "default": "h6"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "label": "Vertical padding",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border width",
+      "min": 0,
+      "max": 10,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "select",
+      "id": "border_style",
+      "label": "Border style",
+      "options": [
+        {
+          "value": "solid",
+          "label": "Solid"
+        },
+        {
+          "value": "dashed",
+          "label": "Dashed"
+        },
+        {
+          "value": "dotted",
+          "label": "Dotted"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#000000"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Metafield ribbon"
+    }
+  ]
+}
+{% endschema %}

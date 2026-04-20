@@ -1,0 +1,715 @@
+{% doc %}
+  @prompt
+    Create a custom Liquid section for a 5-slide horizontal slider .The section should meet these exact requirements:
+    
+    1. Structure & Layout:
+    
+    A horizontal slider containing 5 slides.
+    
+    Each slide consists of a image and arich text box at the bottom.
+    
+    Include standard slider navigation: left/right arrows on the sides and dot pagination at the bottom.
+    
+    2. Slide Customization (Schema):
+    
+    Image Picker: Each of the 5 slides must have its own image upload.
+    
+    Image Fit: Add a dropdown for each slide to choose between 'Cover' or 'Contain' for the image fit.
+    
+    Rich Text: A rich text field for each slide to input a title and description.
+    
+    Visibility Toggle: A checkbox for each slide to 'Show' or 'Hide' it, allowing me to use fewer than 5 slides if needed.
+    
+    3. Design Specifics:
+    
+    Ensure the layout is responsive, stacking or scaling for mobile devices., remove left and right slide arrows and make the slide background transparent. , Add aspect ratio settings on each image 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-slider-container-{{ ai_gen_id }} {
+    position: relative;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+    margin: 0 auto;
+    display: block;
+  }
+
+  .ai-slider-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    overflow: hidden;
+    border-radius: {{ block.settings.border_radius }}px;
+  }
+
+  .ai-slider-track-{{ ai_gen_id }} {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+  }
+
+  .ai-slider-slide-{{ ai_gen_id }} {
+    min-width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ai-slider-image-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .ai-slider-image-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-slider-image-cover-{{ ai_gen_id }} {
+    object-fit: cover;
+  }
+
+  .ai-slider-image-contain-{{ ai_gen_id }} {
+    object-fit: contain;
+  }
+
+  .ai-slider-placeholder-{{ ai_gen_id }} {
+    width: 100%;
+    height: 100%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ai-slider-placeholder-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+    max-width: 300px;
+    max-height: 300px;
+  }
+
+  .ai-slider-content-{{ ai_gen_id }} {
+    padding: {{ block.settings.content_padding }}px;
+    background-color: transparent;
+    color: {{ block.settings.content_text_color }};
+  }
+
+  .ai-slider-dots-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 0;
+  }
+
+  .ai-slider-dot-{{ ai_gen_id }} {
+    width: {{ block.settings.dot_size }}px;
+    height: {{ block.settings.dot_size }}px;
+    border-radius: 50%;
+    background-color: {{ block.settings.dot_inactive_color }};
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    padding: 0;
+  }
+
+  .ai-slider-dot-{{ ai_gen_id }}.active {
+    background-color: {{ block.settings.dot_active_color }};
+  }
+
+  @media screen and (max-width: 749px) {
+    .ai-slider-container-{{ ai_gen_id }} {
+      width: 100%;
+    }
+  }
+{% endstyle %}
+
+<horizontal-slider-{{ ai_gen_id }} class="ai-slider-container-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-slider-wrapper-{{ ai_gen_id }}">
+    <div class="ai-slider-track-{{ ai_gen_id }}">
+      {% for i in (1..5) %}
+        {% liquid
+          assign slide_enabled_key = 'slide_' | append: i | append: '_enabled'
+          assign slide_image_key = 'slide_' | append: i | append: '_image'
+          assign slide_fit_key = 'slide_' | append: i | append: '_fit'
+          assign slide_aspect_key = 'slide_' | append: i | append: '_aspect_ratio'
+          assign slide_content_key = 'slide_' | append: i | append: '_content'
+
+          assign slide_enabled = block.settings[slide_enabled_key]
+          assign slide_image = block.settings[slide_image_key]
+          assign slide_fit = block.settings[slide_fit_key]
+          assign slide_aspect = block.settings[slide_aspect_key]
+          assign slide_content = block.settings[slide_content_key]
+        %}
+
+        {% if slide_enabled %}
+          <div class="ai-slider-slide-{{ ai_gen_id }}" data-slide-index="{{ forloop.index0 }}">
+            <div class="ai-slider-image-wrapper-{{ ai_gen_id }}" style="aspect-ratio: {{ slide_aspect }};">
+              {% if slide_image %}
+                <img
+                  src="{{ slide_image | image_url: width: 2000 }}"
+                  alt="{{ slide_image.alt | escape }}"
+                  loading="lazy"
+                  width="{{ slide_image.width }}"
+                  height="{{ slide_image.height }}"
+                  class="ai-slider-image-{{ ai_gen_id }} ai-slider-image-{{ slide_fit }}-{{ ai_gen_id }}"
+                >
+              {% else %}
+                <div class="ai-slider-placeholder-{{ ai_gen_id }}">
+                  {{ 'image' | placeholder_svg_tag }}
+                </div>
+              {% endif %}
+            </div>
+            {% if slide_content != blank %}
+              <div class="ai-slider-content-{{ ai_gen_id }}">
+                {{ slide_content }}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="ai-slider-dots-{{ ai_gen_id }}"></div>
+</horizontal-slider-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class HorizontalSlider{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+        this.currentSlide = 0;
+        this.slides = [];
+      }
+
+      connectedCallback() {
+        this.track = this.querySelector('.ai-slider-track-{{ ai_gen_id }}');
+        this.slideElements = this.querySelectorAll('.ai-slider-slide-{{ ai_gen_id }}');
+        this.dotsContainer = this.querySelector('.ai-slider-dots-{{ ai_gen_id }}');
+
+        this.slides = Array.from(this.slideElements);
+        this.totalSlides = this.slides.length;
+
+        if (this.totalSlides === 0) return;
+
+        this.createDots();
+        this.setupEventListeners();
+        this.updateSlider();
+      }
+
+      createDots() {
+        this.dotsContainer.innerHTML = '';
+        for (let i = 0; i < this.totalSlides; i++) {
+          const dot = document.createElement('button');
+          dot.classList.add('ai-slider-dot-{{ ai_gen_id }}');
+          dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+          dot.addEventListener('click', () => this.goToSlide(i));
+          this.dotsContainer.appendChild(dot);
+        }
+      }
+
+      setupEventListeners() {
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        this.track.addEventListener('touchstart', (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+        });
+
+        this.track.addEventListener('touchend', (e) => {
+          touchEndX = e.changedTouches[0].screenX;
+          this.handleSwipe(touchStartX, touchEndX);
+        });
+      }
+
+      handleSwipe(startX, endX) {
+        const swipeThreshold = 50;
+        if (startX - endX > swipeThreshold) {
+          this.nextSlide();
+        } else if (endX - startX > swipeThreshold) {
+          this.previousSlide();
+        }
+      }
+
+      previousSlide() {
+        this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+        this.updateSlider();
+      }
+
+      nextSlide() {
+        this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+        this.updateSlider();
+      }
+
+      goToSlide(index) {
+        this.currentSlide = index;
+        this.updateSlider();
+      }
+
+      updateSlider() {
+        const offset = -this.currentSlide * 100;
+        this.track.style.transform = `translateX(${offset}%)`;
+
+        const dots = this.dotsContainer.querySelectorAll('.ai-slider-dot-{{ ai_gen_id }}');
+        dots.forEach((dot, index) => {
+          if (index === this.currentSlide) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+      }
+    }
+
+    customElements.define('horizontal-slider-{{ ai_gen_id }}', HorizontalSlider{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Horizontal slider",
+  "tag": null,
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Content box"
+    },
+    {
+      "type": "range",
+      "id": "content_padding",
+      "label": "Padding",
+      "min": 10,
+      "max": 50,
+      "step": 5,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "color",
+      "id": "content_text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Dot pagination"
+    },
+    {
+      "type": "range",
+      "id": "dot_size",
+      "label": "Dot size",
+      "min": 6,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 10
+    },
+    {
+      "type": "color",
+      "id": "dot_active_color",
+      "label": "Active dot color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "dot_inactive_color",
+      "label": "Inactive dot color",
+      "default": "#cccccc"
+    },
+    {
+      "type": "header",
+      "content": "Slide 1"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_1_enabled",
+      "label": "Show slide 1",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_1_image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "slide_1_aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "1/1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "4/3",
+          "label": "Landscape (4:3)"
+        },
+        {
+          "value": "3/2",
+          "label": "Landscape (3:2)"
+        },
+        {
+          "value": "16/9",
+          "label": "Widescreen (16:9)"
+        },
+        {
+          "value": "21/9",
+          "label": "Ultrawide (21:9)"
+        },
+        {
+          "value": "3/4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "2/3",
+          "label": "Portrait (2:3)"
+        }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "select",
+      "id": "slide_1_fit",
+      "label": "Image fit",
+      "options": [
+        {
+          "value": "cover",
+          "label": "Cover"
+        },
+        {
+          "value": "contain",
+          "label": "Contain"
+        }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "richtext",
+      "id": "slide_1_content",
+      "label": "Content",
+      "default": "<p>Slide 1 content</p>"
+    },
+    {
+      "type": "header",
+      "content": "Slide 2"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_2_enabled",
+      "label": "Show slide 2",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_2_image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "slide_2_aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "1/1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "4/3",
+          "label": "Landscape (4:3)"
+        },
+        {
+          "value": "3/2",
+          "label": "Landscape (3:2)"
+        },
+        {
+          "value": "16/9",
+          "label": "Widescreen (16:9)"
+        },
+        {
+          "value": "21/9",
+          "label": "Ultrawide (21:9)"
+        },
+        {
+          "value": "3/4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "2/3",
+          "label": "Portrait (2:3)"
+        }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "select",
+      "id": "slide_2_fit",
+      "label": "Image fit",
+      "options": [
+        {
+          "value": "cover",
+          "label": "Cover"
+        },
+        {
+          "value": "contain",
+          "label": "Contain"
+        }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "richtext",
+      "id": "slide_2_content",
+      "label": "Content",
+      "default": "<p>Slide 2 content</p>"
+    },
+    {
+      "type": "header",
+      "content": "Slide 3"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_3_enabled",
+      "label": "Show slide 3",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_3_image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "slide_3_aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "1/1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "4/3",
+          "label": "Landscape (4:3)"
+        },
+        {
+          "value": "3/2",
+          "label": "Landscape (3:2)"
+        },
+        {
+          "value": "16/9",
+          "label": "Widescreen (16:9)"
+        },
+        {
+          "value": "21/9",
+          "label": "Ultrawide (21:9)"
+        },
+        {
+          "value": "3/4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "2/3",
+          "label": "Portrait (2:3)"
+        }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "select",
+      "id": "slide_3_fit",
+      "label": "Image fit",
+      "options": [
+        {
+          "value": "cover",
+          "label": "Cover"
+        },
+        {
+          "value": "contain",
+          "label": "Contain"
+        }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "richtext",
+      "id": "slide_3_content",
+      "label": "Content",
+      "default": "<p>Slide 3 content</p>"
+    },
+    {
+      "type": "header",
+      "content": "Slide 4"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_4_enabled",
+      "label": "Show slide 4",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_4_image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "slide_4_aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "1/1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "4/3",
+          "label": "Landscape (4:3)"
+        },
+        {
+          "value": "3/2",
+          "label": "Landscape (3:2)"
+        },
+        {
+          "value": "16/9",
+          "label": "Widescreen (16:9)"
+        },
+        {
+          "value": "21/9",
+          "label": "Ultrawide (21:9)"
+        },
+        {
+          "value": "3/4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "2/3",
+          "label": "Portrait (2:3)"
+        }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "select",
+      "id": "slide_4_fit",
+      "label": "Image fit",
+      "options": [
+        {
+          "value": "cover",
+          "label": "Cover"
+        },
+        {
+          "value": "contain",
+          "label": "Contain"
+        }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "richtext",
+      "id": "slide_4_content",
+      "label": "Content",
+      "default": "<p>Slide 4 content</p>"
+    },
+    {
+      "type": "header",
+      "content": "Slide 5"
+    },
+    {
+      "type": "checkbox",
+      "id": "slide_5_enabled",
+      "label": "Show slide 5",
+      "default": true
+    },
+    {
+      "type": "image_picker",
+      "id": "slide_5_image",
+      "label": "Image"
+    },
+    {
+      "type": "select",
+      "id": "slide_5_aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "1/1",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "4/3",
+          "label": "Landscape (4:3)"
+        },
+        {
+          "value": "3/2",
+          "label": "Landscape (3:2)"
+        },
+        {
+          "value": "16/9",
+          "label": "Widescreen (16:9)"
+        },
+        {
+          "value": "21/9",
+          "label": "Ultrawide (21:9)"
+        },
+        {
+          "value": "3/4",
+          "label": "Portrait (3:4)"
+        },
+        {
+          "value": "2/3",
+          "label": "Portrait (2:3)"
+        }
+      ],
+      "default": "16/9"
+    },
+    {
+      "type": "select",
+      "id": "slide_5_fit",
+      "label": "Image fit",
+      "options": [
+        {
+          "value": "cover",
+          "label": "Cover"
+        },
+        {
+          "value": "contain",
+          "label": "Contain"
+        }
+      ],
+      "default": "cover"
+    },
+    {
+      "type": "richtext",
+      "id": "slide_5_content",
+      "label": "Content",
+      "default": "<p>Slide 5 content</p>"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Horizontal slider"
+    }
+  ]
+}
+{% endschema %}

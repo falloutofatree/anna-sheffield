@@ -1,0 +1,143 @@
+{% doc %}
+  @prompt
+    Act as a Shopify Liquid Developer. Create a custom block called "Tooltip Text" for the Product Information section.
+    
+    1. Block Schema (Settings):
+    
+    Main Text: Add a text setting with ID main_text and label "Main Visible Text". Enable dynamic_source: true.
+    
+    Tooltip Content: Add a richtext setting with ID tooltip_content and label "Tooltip Content". Enable dynamic_source: true.
+    
+    Colors: Add color pickers for tooltip_background (default #000000) and tooltip_text_color (default #FFFFFF).
+    
+    2. Liquid & HTML Structure:
+    
+    Create a main wrapper <span> or <div> with the class custom-tooltip-wrapper and include {{ block.shopify_attributes }}.
+    
+    Output the block.settings.main_text inside the wrapper. Add a subtle dotted underline to this text to indicate it's interactive.
+    
+    Conditional Logic: Use {% if block.settings.tooltip_content != blank %} to conditionally render a child <div> with the class custom-tooltip-content. Output the richtext inside this child div.
+    
+    3. Pure CSS Implementation (No JavaScript):
+    
+    Map the color settings using an inline {% style %} block.
+    
+    Wrapper (.custom-tooltip-wrapper): Set to position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted currentColor;.
+    
+    Tooltip Box (.custom-tooltip-content): Set to position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 250px; padding: 8px 12px; border-radius: 4px; font-size: 13px; text-align: center; z-index: 99;.
+    
+    Hidden State: Set the tooltip box to opacity: 0; visibility: hidden; transition: opacity 0.2s ease, transform 0.2s ease; margin-bottom: 5px;.
+    
+    Hover State: When the wrapper is hovered (.custom-tooltip-wrapper:hover .custom-tooltip-content), change to opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-5px);.
+    
+    The Arrow: Add a small CSS triangle using the ::after pseudo-element on the tooltip box, pointing downwards and matching the tooltip_background color., Add rich text editor on Main visible text
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .custom-tooltip-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+    border-bottom: 1px dotted currentColor;
+    width: {{ block.settings.desktop_width_percent }}%;
+  }
+
+  .custom-tooltip-content-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 250px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+    z-index: 99;
+    background-color: {{ block.settings.tooltip_background }};
+    color: {{ block.settings.tooltip_text_color }};
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-bottom: 5px;
+    pointer-events: none;
+  }
+
+  .custom-tooltip-content-{{ ai_gen_id }}::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: {{ block.settings.tooltip_background }} transparent transparent transparent;
+  }
+
+  .custom-tooltip-wrapper-{{ ai_gen_id }}:hover .custom-tooltip-content-{{ ai_gen_id }} {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
+  }
+{% endstyle %}
+
+<span class="custom-tooltip-wrapper-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {{ block.settings.main_text }}
+  {% if block.settings.tooltip_content != blank %}
+    <div class="custom-tooltip-content-{{ ai_gen_id }}">
+      {{ block.settings.tooltip_content }}
+    </div>
+  {% endif %}
+</span>
+
+{% schema %}
+{
+  "name": "Tooltip text",
+  "settings": [
+    {
+      "type": "richtext",
+      "id": "main_text",
+      "label": "Main visible text",
+      "default": "<p>Hover over me</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "tooltip_content",
+      "label": "Tooltip content",
+      "default": "<p>This is the tooltip content</p>"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "tooltip_background",
+      "label": "Tooltip background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "tooltip_text_color",
+      "label": "Tooltip text color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    }
+  ],
+  "presets": [
+    {
+      "name": "Tooltip text"
+    }
+  ]
+}
+{% endschema %}

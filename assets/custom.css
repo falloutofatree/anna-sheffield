@@ -1,0 +1,218 @@
+/* Custom fonts */
+
+@font-face {
+  font-family: "Portrait";
+  src: url("https://cdn.shopify.com/s/files/1/0039/8002/files/PortraitText-Regular2.woff2?v=1770650969") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pegasus";
+  src: url("https://cdn.shopify.com/s/files/1/0039/8002/files/Pegasus-Regular_14_ik2.woff2?v=1770650969") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Styrene A";
+  src: url("https://cdn.shopify.com/s/files/1/0039/8002/files/Styrene_A-Regular.woff2?v=1770650969") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Styrene B";
+  src: url("https://cdn.shopify.com/s/files/1/0039/8002/files/Styrene_B-Regular.woff2?v=1770650969") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Custom Font Families */
+:root {
+  --font-body--family: "Styrene A", "Futura", sans-serif;
+  --font-subheading--family: "Styrene A", "Futura", sans-serif;
+  --font-heading--family: "Pegasus", "Baskerville", serif;
+  --font-accent--family: "Styrene A", "Futura", sans-serif;
+}
+
+
+span[class^="custom-tooltip-wrapper"] {
+  border-bottom: 1px solid currentColor;
+}
+
+span[class^="custom-tooltip-wrapper"] h6 {
+  margin-bottom: 0 !important;
+}
+
+
+.icon-tooltip-container-anjfyumuwmgfrvdbzsaigenblockc116c21mviile {
+  width: auto;
+}
+
+.add-to-cart-component button {
+  padding: 4px 24px !important;
+}
+
+.add-to-cart-button .add-to-cart-icon {
+  display: none !important;
+}
+
+
+#dropahint {
+  display: none !important;
+}
+
+.buy-buttons-block,
+.add-to-cart-button {
+  width: 100% !important;
+}
+
+select {
+  padding: 16px 8px !important;
+  min-width: 100px;
+}
+
+.product-media img {
+  mix-blend-mode: multiply;
+}
+
+.collection-card__content.layout-panel-flex--column,
+.collection-card__content.layout-panel-flex--column h6 {
+  background-color: #ffffff;
+}
+
+#filters-drawer-heading {
+  font-family: var(--font-accent--family);
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.facets-drawer__filters,
+.facets__title-wrapper,
+.facets__drawer-actions {
+  background-color: #ffffff;
+}
+
+slideshow-slides[gutters*=end] {
+    padding-inline-end: 0;
+}
+
+a.mega-menu__link.mega-menu__link--parent {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+span.menu-drawer__menu-item-text.wrap-text {
+  font-size: 11px;
+}
+
+.menu-drawer__navigation > .menu-drawer__menu.has-submenu > li {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 15px;
+  margin-bottom: 15px; 
+}
+
+.menu-drawer__navigation > .menu-drawer__menu.has-submenu > li:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.menu-drawer__menu--childlist > .menu-drawer__list-item--deep {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+span.svg-wrapper.icon-caret.icon-caret--forward {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+
+  padding-right: 0 !important;
+}
+
+span.svg-wrapper.icon-plus {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+li.menu-drawer__list-item {
+  padding: 8px 0px 8px 0px;
+}
+
+
+/*FIXED: FILTER DRAWER & SORT (ABSOLUTE LAYOUT)*/
+
+@media screen and (min-width: 750px) {
+  dialog-component.facets-block-wrapper {
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  dialog-component.facets-block-wrapper .facets__filters-wrapper,
+  dialog-component.facets-block-wrapper .facets__form {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  div.facets-block-wrapper:not(dialog-component) .facets__filters-wrapper,
+  div.facets-block-wrapper:not(dialog-component) .facets-horizontal-remove,
+  div.facets-block-wrapper:not(dialog-component) .filter-remove-buttons {
+    display: none !important;
+  }
+
+  div.facets-block-wrapper:not(dialog-component) {
+    display: block !important;
+    width: 100% !important;
+
+    margin-bottom: 30px !important;
+    position: relative;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  div.facets-block-wrapper:not(dialog-component) .facets__form {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-end !important;
+    pointer-events: auto;
+  }
+
+  .facets-toggle {
+    display: flex !important;
+    position: absolute !important;
+
+    width: auto !important;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  .facets-toggle__button {
+    display: flex !important;
+    pointer-events: auto;
+  }
+
+  .facets-toggle .facets-mobile-wrapper {
+    display: none !important;
+  }
+}
+
+label.checkbox__label {
+    text-transform: capitalize;
+}
+
+label.variant-option__button-label {
+    font-size: 11px;
+    text-transform: uppercase;
+}

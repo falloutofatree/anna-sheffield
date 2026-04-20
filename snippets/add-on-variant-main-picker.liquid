@@ -1,0 +1,346 @@
+{% liquid
+assign block_settings = block.settings
+assign swatch_count = product_option.values | map: 'swatch' | compact | size
+    assign variant_style = block_settings.variant_style
+
+    if swatch_count > 0 and block_settings.show_swatches
+      if block_settings.variant_style == 'dropdown'
+        assign variant_style = 'swatch_dropdown'
+      else
+        assign variant_style = 'swatch'
+      endif
+    endif
+
+    if variant_style == 'buttons' and settings.variant_button_width == 'equal-width-buttons'
+      assign fieldset_id = section.id | append: '-' | append: product_resource.id | append: '-' | append: product_option.name | handleize
+      assign option_id_attribute = 'data-option-id="' | append: fieldset_id | append: '"'
+      assign longest_value = 0
+    endif
+
+  assign product_resource = closest.product
+  if request.visual_preview_mode and product_resource == blank
+    assign product_resource = collections.all.products.first
+  endif
+-%}
+
+{% unless product_resource == blank %}
+  
+  {% comment %} 1. The Theme's Native Variant Picker (Untouched) {% endcomment %}
+  {% comment %} {% render 'variant-main-picker', product_resource: product_resource %} {% endcomment %}
+
+  {% comment %} 2. Our Isolated Add-ons Block {% endcomment %}
+  {% assign addon_list = product_resource.metafields.custom.add_on_products.value %}
+
+  {% if addon_list != blank %}
+    <div
+    class="variant-picker spacing-style variant-picker--{{ block_settings.alignment }}"
+    style="--color-strikethrough-mix: {{ strikethrough_color_mix }}; {% render 'spacing-style', settings: block_settings %}"
+    {{ block.shopify_attributes }}
+    {% if request.visual_preview_mode %}
+      data-shopify-visual-preview
+    {% endif %}
+    >
+    <div class="isolated-dynamic-addons" style="margin-top: 2rem; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 2rem;">
+
+      {% for addon_product in addon_list %}
+        <fieldset 
+          {% comment %} class="isolated-addon-fieldset" {% endcomment %}
+          class="variant-option variant-option--buttons{% if variant_style == 'swatch' %} variant-option--swatches{% else %} variant-option--{{ settings.variant_button_width }}{% endif %}"
+          data-fieldset-index="{{ fieldset_index }}"
+          ref="fieldsets[]"
+          {{ option_id_attribute }}
+        >
+        <legend>
+          {{ addon_product.title | escape -}}
+          {%- if variant_style == 'swatch' -%}
+            <span class="variant-option__swatch-value">{{ addon_product.selected_value }}</span>
+          {%- endif %}
+        </legend>
+
+          <div class="isolated-addon-flex">
+            
+            {% comment %} The "None" Option {% endcomment %}
+            <label for="addon-none-{{ addon_product.id }}"
+              class="variant-option__button-label{% if variant_style == 'swatch' %} variant-option__button-label--has-swatch{% endif %}"
+            >
+              <input 
+              type="radio" 
+              id="addon-none-{{ addon_product.id }}" 
+              name="isolated-addon-{{ addon_product.id }}" 
+              value="none" 
+              checked
+            >
+                <span
+                  class="variant-option__button-label__pill"
+                  data-key="variant-option-pill"
+                ></span>
+              <span
+                class="variant-option__button-label__text"
+                data-key="variant-option-text"
+              >
+                NONE
+              </span>
+            </label>
+
+            {% comment %} The Variant Options {% endcomment %}
+            {% for variant in addon_product.variants %}
+              <label for="addon-{{ variant.id }}" 
+                class="variant-option__button-label{% if variant_style == 'swatch' %} variant-option__button-label--has-swatch{% endif %}
+                {% unless variant.available %}sold-out{% endunless %}">
+                <input 
+                type="radio" 
+                id="addon-{{ variant.id }}" 
+                name="isolated-addon-{{ addon_product.id }}" 
+                value="{{ variant.id }}" 
+                {% unless variant.available %}disabled{% endunless %} 
+              >
+                
+              {% if variant.available == true %}
+                  <span
+                    class="variant-option__button-label__pill"
+                    data-key="variant-option-pill"
+                  ></span>
+              {% endif %}
+                <span
+                  class="variant-option__button-label__text"
+                  data-key="variant-option-text"
+                >
+                  {% if variant.title == 'Default Title' %}
+                    YES
+                  {% else %}
+                    {{ variant.title | upcase }}
+                  {% endif %}
+                </span>
+
+              </label>
+            {% endfor %}
+            
+          </div>
+        </fieldset>
+      {% endfor %}
+    </div>
+  </div>
+
+    {% comment %} 3. Safe CSS to mimic your theme's styling {% endcomment %}
+    <style>
+      .isolated-addon-fieldset {
+        border: none;
+        padding: 0;
+        margin: 0 0 1.5rem 0;
+      }
+      .isolated-addon-legend {
+        margin-bottom: 10px;
+        display: block;
+        font-size: 14px;
+        color: #121212;
+      }
+      .isolated-addon-flex {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .isolated-visually-hidden {
+        position: absolute !important;
+        overflow: hidden;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        border: 0;
+        clip: rect(0 0 0 0);
+      }
+      /* Mimics your theme's square buttons */
+      .isolated-addon-label {
+        display: inline-block;
+        padding: 12px 24px;
+        font-size: 13px;
+        border: 1px solid #e2e2e2;
+        cursor: pointer;
+        background-color: transparent;
+        color: #000;
+        transition: all 0.1s ease;
+      }
+      /* Selected State */
+      .isolated-dynamic-addons input[type="radio"]:checked + .isolated-addon-label {
+        background-color: #000000;
+        color: #ffffff;
+        border-color: #000000;
+      }
+      .isolated-addon-label.sold-out {
+        opacity: 0.5;
+        text-decoration: line-through;
+        cursor: not-allowed;
+      }
+    </style>
+
+    {% comment %} 4. Cart Engine Javascript {% endcomment %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const productForm = document.querySelector('form[action*="/cart/add"]');
+        const submitButton = productForm ? productForm.querySelector('[type="submit"], button.add-to-cart') : null;
+
+        if (productForm && submitButton) {
+          submitButton.addEventListener('click', function(event) {
+            
+            const selectedAddons = document.querySelectorAll('.isolated-dynamic-addons input[type="radio"]:checked');
+            
+            let hasRealAddon = false;
+            selectedAddons.forEach(radio => {
+              if (radio.value !== 'none') hasRealAddon = true;
+            });
+
+            if (hasRealAddon) {
+              event.preventDefault(); 
+              event.stopPropagation(); 
+
+              const originalButtonText = submitButton.innerHTML;
+              submitButton.innerHTML = 'Adding...';
+              submitButton.setAttribute('disabled', 'disabled');
+              
+              const mainVariantInput = productForm.querySelector('[name="id"]');
+              const mainVariantId = mainVariantInput ? mainVariantInput.value : null;
+
+              let itemsToAdd = [];
+
+              // Grab the hidden engraving text from the Custom Liquid Block
+              const engravingPayload = document.getElementById('final-engraving-payload');
+              const engravingText = engravingPayload ? engravingPayload.value : '';
+
+              if (mainVariantId) {
+                let mainItem = { id: parseInt(mainVariantId), quantity: 1 };
+                
+                // Attach Engraving as a Line Item Property
+                if (engravingText !== '') {
+                  mainItem.properties = { 'Engraving': engravingText };
+                }
+                
+                itemsToAdd.push(mainItem);
+              }
+
+              selectedAddons.forEach(function(radio) {
+                if (radio.value !== 'none') {
+                  itemsToAdd.push({ id: parseInt(radio.value), quantity: 1 });
+                }
+              });
+
+              fetch(window.Shopify.routes.root + 'cart/add.js', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items: itemsToAdd })
+              })
+              .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+              })
+              .then(data => {
+                window.location.href = window.Shopify.routes.root + 'cart';
+              })
+              .catch(error => {
+                console.error('Error adding to cart:', error);
+                submitButton.innerHTML = originalButtonText;
+                submitButton.removeAttribute('disabled');
+                alert('There was an issue adding these items to your cart.');
+              });
+            }
+          }, true); 
+        }
+      });
+    </script>
+  {% endif %}
+
+{% endunless %}
+
+{% comment %} {% schema %}
+{
+  "name": "t:names.product_variant_picker",
+  "tag": null,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "t:content.resource_reference_product_variant_picker"
+    },
+    {
+      "type": "paragraph",
+      "content": "t:content.edit_variants_in_theme_settings"
+    },
+    {
+      "type": "select",
+      "id": "variant_style",
+      "label": "t:settings.style",
+      "options": [
+        {
+          "value": "dropdowns",
+          "label": "t:options.dropdowns"
+        },
+        {
+          "value": "buttons",
+          "label": "t:options.buttons"
+        }
+      ],
+      "default": "buttons"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_swatches",
+      "label": "t:settings.swatches",
+      "default": true
+    },
+    {
+      "type": "text_alignment",
+      "id": "alignment",
+      "label": "t:settings.alignment",
+      "default": "left"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-start",
+      "label": "t:settings.left",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-inline-end",
+      "label": "t:settings.right",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.product_variant_picker",
+      "category": "t:categories.product"
+    }
+  ]
+}
+{% endschema %} {% endcomment %}

@@ -1,0 +1,199 @@
+{% doc %}
+  @prompt
+    Write the code for a Custom Liquid block that displays a small 'info' icon (use an inline SVG for the icon). When a customer hovers over the icon, a CSS-only tooltip should appear above it displaying a brief text message.
+    
+    Please follow these strict requirements:
+    
+    Do not use any JavaScript. Use pure CSS for the hover state and tooltip visibility.
+    
+    Scope all CSS specifically to {{ block.id }} or a unique class name so it does not conflict with my theme's global styles.
+    
+    Position the tooltip absolute to the icon, give it a dark gray background, white text, rounded corners, and a small CSS triangle pointing down to the icon.
+    4. use the existing tooltip styling
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-info-tooltip-{{ ai_gen_id }} {
+    display: inline-block;
+    position: relative;
+    width: {{ block.settings.desktop_width_percent }}%;
+  }
+
+  .ai-info-tooltip__icon-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: {{ block.settings.icon_size }}px;
+    height: {{ block.settings.icon_size }}px;
+    cursor: help;
+    color: {{ block.settings.icon_color }};
+  }
+
+  .ai-info-tooltip__icon-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .ai-info-tooltip__text-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: calc(100% + {{ block.settings.tooltip_offset }}px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: {{ block.settings.tooltip_bg_color }};
+    color: {{ block.settings.tooltip_text_color }};
+    padding: {{ block.settings.tooltip_padding }}px;
+    border-radius: {{ block.settings.tooltip_border_radius }}px;
+    font-size: {{ block.settings.tooltip_font_size }}px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .ai-info-tooltip__text-{{ ai_gen_id }}::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: {{ block.settings.arrow_size }}px;
+    border-style: solid;
+    border-color: {{ block.settings.tooltip_bg_color }} transparent transparent transparent;
+  }
+
+  .ai-info-tooltip__icon-{{ ai_gen_id }}:hover + .ai-info-tooltip__text-{{ ai_gen_id }} {
+    opacity: 1;
+    visibility: visible;
+  }
+{% endstyle %}
+
+<div class="ai-info-tooltip-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <span class="ai-info-tooltip__icon-{{ ai_gen_id }}">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </svg>
+  </span>
+  <span class="ai-info-tooltip__text-{{ ai_gen_id }}">
+    {{ block.settings.tooltip_text }}
+  </span>
+</div>
+
+{% schema %}
+{
+  "name": "Info tooltip",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Icon"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 10,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Tooltip"
+    },
+    {
+      "type": "text",
+      "id": "tooltip_text",
+      "label": "Tooltip text",
+      "default": "This is helpful information"
+    },
+    {
+      "type": "color",
+      "id": "tooltip_bg_color",
+      "label": "Background color",
+      "default": "#333333"
+    },
+    {
+      "type": "color",
+      "id": "tooltip_text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "tooltip_font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "tooltip_padding",
+      "label": "Padding",
+      "min": 4,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "tooltip_border_radius",
+      "label": "Border radius",
+      "min": 0,
+      "max": 16,
+      "step": 2,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
+      "id": "tooltip_offset",
+      "label": "Distance from icon",
+      "min": 4,
+      "max": 20,
+      "step": 2,
+      "unit": "px",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "arrow_size",
+      "label": "Arrow size",
+      "min": 4,
+      "max": 12,
+      "step": 2,
+      "unit": "px",
+      "default": 6
+    }
+  ],
+  "presets": [
+    {
+      "name": "Info tooltip"
+    }
+  ]
+}
+{% endschema %}

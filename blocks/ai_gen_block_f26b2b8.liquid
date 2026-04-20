@@ -1,0 +1,246 @@
+{% doc %}
+  @prompt
+    Act as an expert Shopify Liquid Developer. Write the complete code for a Custom Liquid block to be used on the Product Information section. This block will act as a custom quantity selector using a dropdown menu.
+    
+    1. HTML/Liquid Structure:
+    
+    Create a wrapper <div> for the custom dropdown.
+    
+    Inside, build a <select> element with the attribute name="quantity" form="{{ product.form_id }}" so it automatically hooks into the native Shopify Add to Cart form.
+    
+    Include exactly two options:
+    
+    <option value="1">SINGLE</option>
+    
+    <option value="2">PAIR</option>
+    
+    2. Pure CSS Styling (Scope to a unique class or block.id):
+    
+    Remove the default browser dropdown arrow using appearance: none; and -webkit-appearance: none;.
+    
+    Border: 1px solid (use a neutral dark gray or black), with border-radius: 0 (no rounded corners).
+    
+    Font: 12px 'Styrene A', sans-serif.
+    
+    Text: text-transform: uppercase;.
+    
+    Width: width: auto; with appropriate left/right padding.
+    
+    Icon: Add a custom downward chevron icon using a pure CSS background-image (inline SVG data URI) positioned on the right side of the select box. Ensure there is enough right padding on the text so it doesn't overlap the chevron.
+    
+    3. JavaScript (If necessary):
+    
+    The <select> having name="quantity" should be enough for standard Shopify forms, but add a small, lightweight vanilla JavaScript event listener to ensure if the user changes the dropdown, it updates any standard hidden quantity inputs on the page just in case the theme (Nyla) relies on a hidden input for AJAX cart submission.
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-quantity-selector-{{ ai_gen_id }} {
+    display: block;
+    width: {{ block.settings.desktop_width_percent }}%;
+    max-width: 100%;
+  }
+
+  .ai-quantity-selector-{{ ai_gen_id }}__wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .ai-quantity-selector-{{ ai_gen_id }}__select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    padding: {{ block.settings.padding_vertical }}px {{ block.settings.padding_horizontal }}px;
+    padding-right: {{ block.settings.padding_horizontal | plus: 24 }}px;
+    border: {{ block.settings.border_width }}px solid {{ block.settings.border_color }};
+    border-radius: 0;
+    background-color: {{ block.settings.background_color }};
+    color: {{ block.settings.text_color }};
+    font-family: 'Styrene A', sans-serif;
+    font-size: {{ block.settings.font_size }}px;
+    text-transform: uppercase;
+    cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="{{ block.settings.text_color | url_encode }}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right {{ block.settings.padding_horizontal | divided_by: 2 }}px center;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .ai-quantity-selector-{{ ai_gen_id }}__select:hover {
+    border-color: {{ block.settings.border_hover_color }};
+    background-color: {{ block.settings.background_hover_color }};
+  }
+
+  .ai-quantity-selector-{{ ai_gen_id }}__select:focus {
+    outline: 2px solid {{ block.settings.border_color }};
+    outline-offset: 2px;
+  }
+
+  .ai-quantity-selector-{{ ai_gen_id }}__select option {
+    background-color: {{ block.settings.background_color }};
+    color: {{ block.settings.text_color }};
+  }
+{% endstyle %}
+
+<quantity-selector-{{ ai_gen_id }}
+  class="ai-quantity-selector-{{ ai_gen_id }}"
+  {{ block.shopify_attributes }}
+>
+  <div class="ai-quantity-selector-{{ ai_gen_id }}__wrapper">
+    <select
+      name="quantity"
+      form="{{ product_form_id }}"
+      class="ai-quantity-selector-{{ ai_gen_id }}__select"
+      aria-label="Quantity"
+    >
+      <option value="1">SINGLE</option>
+      <option value="2">PAIR</option>
+    </select>
+  </div>
+</quantity-selector-{{ ai_gen_id }}>
+
+<script>
+  (function() {
+    class QuantitySelector{{ ai_gen_id }} extends HTMLElement {
+      constructor() {
+        super();
+      }
+
+      connectedCallback() {
+        this.select = this.querySelector('.ai-quantity-selector-{{ ai_gen_id }}__select');
+        this.setupEventListeners();
+      }
+
+      setupEventListeners() {
+        if (!this.select) return;
+
+        this.select.addEventListener('change', (event) => {
+          const selectedQuantity = event.target.value;
+          
+          const hiddenQuantityInputs = document.querySelectorAll('input[name="quantity"][type="hidden"]');
+          hiddenQuantityInputs.forEach((input) => {
+            input.value = selectedQuantity;
+          });
+
+          const quantityInputs = document.querySelectorAll('input[name="quantity"]:not([type="hidden"])');
+          quantityInputs.forEach((input) => {
+            if (input !== this.select) {
+              input.value = selectedQuantity;
+            }
+          });
+
+          this.dispatchEvent(new CustomEvent('quantity-changed', {
+            bubbles: true,
+            detail: { quantity: selectedQuantity }
+          }));
+        });
+      }
+    }
+
+    customElements.define('quantity-selector-{{ ai_gen_id }}', QuantitySelector{{ ai_gen_id }});
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Quantity selector",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Font size",
+      "min": 10,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "padding_vertical",
+      "label": "Vertical padding",
+      "min": 8,
+      "max": 24,
+      "step": 2,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "padding_horizontal",
+      "label": "Horizontal padding",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "border_width",
+      "label": "Border width",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "default": 1
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "background_hover_color",
+      "label": "Background hover",
+      "default": "#f5f5f5"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "border_hover_color",
+      "label": "Border hover",
+      "default": "#333333"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Quantity selector"
+    }
+  ],
+  "tag": null
+}
+{% endschema %}

@@ -1,0 +1,191 @@
+{% doc %}
+  @prompt
+    Act as a Shopify Liquid Developer. Create a custom block called 'Icon Tooltip' for the Product Information section.
+    
+    1. Block Schema (Settings):
+    
+    Custom Icon: Add an html setting with the ID custom_icon and label "Custom Icon (Paste SVG)". Provide a default simple info-circle SVG.
+    
+    Main Text: Add a richtext setting with the ID main_text and label "Main Visible Text". Enable dynamic_source: true.
+    
+    Tooltip Content: Add a richtext setting with the ID tooltip_content and label "Tooltip Content". Enable dynamic_source: true.
+    
+    Colors: Add color pickers for icon_color (default #000000), tooltip_background (default #000000), and tooltip_text_color (default #FFFFFF).
+    
+    2. Liquid & HTML Structure:
+    
+    Create a main wrapper <div> with the class icon-tooltip-container (set to display: flex; align-items: center; gap: 8px;) and include {{ block.shopify_attributes }}.
+    
+    Output the block.settings.main_text inside this main wrapper.
+    
+    Create an icon wrapper <span> with the class custom-tooltip-wrapper next to the text. Output the block.settings.custom_icon inside this span.
+    
+    Conditional Logic: Use {% if block.settings.tooltip_content != blank %} to conditionally render a child <div> with the class custom-tooltip-content inside the .custom-tooltip-wrapper span. Output the tooltip richtext inside this child div.
+    
+    3. Pure CSS Implementation (No JavaScript):
+    
+    Map the color settings using an inline {% style %} block scoped to the block ID. Ensure the SVG fills with the icon_color.
+    
+    Wrapper (.custom-tooltip-wrapper): Set to position: relative; display: inline-flex; align-items: center; cursor: help;. (Do not use the dotted border anymore, as the icon implies interactivity).
+    
+    Tooltip Box (.custom-tooltip-content): Set to position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); width: max-content; max-width: 250px; padding: 8px 12px; border-radius: 4px; font-size: 13px; text-align: center; z-index: 99; background-color: [tooltip_background]; color: [tooltip_text_color];.
+    
+    Hidden State: Set the tooltip box to opacity: 0; visibility: hidden; transition: opacity 0.2s ease, transform 0.2s ease; margin-bottom: 8px;.
+    
+    Hover State: When the icon wrapper is hovered (.custom-tooltip-wrapper:hover .custom-tooltip-content), change to opacity: 1; visibility: visible; transform: translateX(-50%) translateY(-5px);.
+    
+    The Arrow: Add a small CSS triangle using the ::after pseudo-element on the tooltip box, pointing downwards and matching the tooltip_background color., change the icon field to icon upload instead of pasting the svg code
+    
+    set icon width to auto, add icon size setting and remove any border decoration. 
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .icon-tooltip-container-{{ ai_gen_id }} {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: {{ block.settings.desktop_width_percent }}%;
+  }
+
+  .custom-tooltip-wrapper-{{ ai_gen_id }} {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+  }
+
+  .custom-tooltip-wrapper-{{ ai_gen_id }} img {
+    width: auto;
+    height: {{ block.settings.icon_size }}px;
+    filter: brightness(0) saturate(100%);
+  }
+
+  .custom-tooltip-content-{{ ai_gen_id }} {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 250px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    text-align: center;
+    z-index: 99;
+    background-color: {{ block.settings.tooltip_background }};
+    color: {{ block.settings.tooltip_text_color }};
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    margin-bottom: 8px;
+    pointer-events: none;
+  }
+
+  .custom-tooltip-content-{{ ai_gen_id }}::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: {{ block.settings.tooltip_background }} transparent transparent transparent;
+  }
+
+  .custom-tooltip-wrapper-{{ ai_gen_id }}:hover .custom-tooltip-content-{{ ai_gen_id }} {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
+  }
+{% endstyle %}
+
+<div class="icon-tooltip-container-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  {% if block.settings.main_text != blank %}
+    <div>{{ block.settings.main_text }}</div>
+  {% endif %}
+
+  <span class="custom-tooltip-wrapper-{{ ai_gen_id }}">
+    {% if block.settings.custom_icon != blank %}
+      {{ block.settings.custom_icon | image_url: width: 64 | image_tag: loading: 'lazy' }}
+    {% endif %}
+
+    {% if block.settings.tooltip_content != blank %}
+      <div class="custom-tooltip-content-{{ ai_gen_id }}">
+        {{ block.settings.tooltip_content }}
+      </div>
+    {% endif %}
+  </span>
+</div>
+
+{% schema %}
+{
+  "name": "Icon tooltip",
+  "settings": [
+    {
+      "type": "richtext",
+      "id": "main_text",
+      "label": "Main visible text",
+      "default": "<p>Product information</p>"
+    },
+    {
+      "type": "image_picker",
+      "id": "custom_icon",
+      "label": "Custom icon"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "label": "Icon size",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 16
+    },
+    {
+      "type": "richtext",
+      "id": "tooltip_content",
+      "label": "Tooltip content",
+      "default": "<p>This is additional information that appears on hover</p>"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "Icon color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "tooltip_background",
+      "label": "Tooltip background",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "tooltip_text_color",
+      "label": "Tooltip text color",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "range",
+      "id": "desktop_width_percent",
+      "label": "Desktop width",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 100
+    }
+  ],
+  "presets": [
+    {
+      "name": "Icon tooltip"
+    }
+  ]
+}
+{% endschema %}
