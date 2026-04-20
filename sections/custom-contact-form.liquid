@@ -18,6 +18,7 @@
         {{ form.errors | default_errors }}
 
         <div class="custom-input-group">
+          <label class="visually-hidden" for="ContactSubject">Subject</label>
           <select id="ContactSubject" name="contact[Subject]" class="custom-contact-input" required>
             <option value="" disabled selected>Select a Subject*</option>
             <option value="Custom">CUSTOM</option>
@@ -33,18 +34,22 @@
         </div>
 
         <div class="custom-input-group">
+          <label class="visually-hidden" for="ContactName">Name</label>
           <input type="text" id="ContactName" name="contact[name]" placeholder="Name*" required class="custom-contact-input">
         </div>
-        
+
         <div class="custom-input-group">
+          <label class="visually-hidden" for="ContactEmail">Email</label>
           <input type="email" id="ContactEmail" name="contact[email]" placeholder="Email*" required class="custom-contact-input" autocorrect="off" autocapitalize="off">
         </div>
 
         <div class="custom-input-group">
+          <label class="visually-hidden" for="ContactPhone">Phone</label>
           <input type="tel" id="ContactPhone" name="contact[phone]" placeholder="Phone (Optional)" class="custom-contact-input" pattern="[0-9\-]*">
         </div>
-        
+
         <div class="custom-input-group">
+          <label class="visually-hidden" for="ContactMessage">Message</label>
           <textarea id="ContactMessage" name="contact[body]" rows="4" placeholder="Leave us a message*" required class="custom-contact-input"></textarea>
         </div>
         
