@@ -1,4 +1,3 @@
 [environments.default]
-# store = "yourstore.myshopify.com"
-# theme = "your theme ID"
-
+store = "annasheffield.myshopify.com"
+theme = "129226735674"
